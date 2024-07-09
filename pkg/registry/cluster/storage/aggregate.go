@@ -150,6 +150,7 @@ func requestWithResourceNameHandlerFunc(
 					klog.Errorf("failed to get impersonateToken for cluster %s: %v", cluster.Name, err)
 					return
 				}
+				klog.Infof("requestWithResourceNameHandlerFunc")
 				statusCode, err := doClusterRequest(req.Method, requestURLStr(location.String(), proxyRequestInfo), transport, requester, impersonateToken)
 				if err != nil {
 					klog.Errorf("failed to do request for cluster %s: %v", cluster.Name, err)
@@ -382,7 +383,10 @@ func requestURLStr(urlStr string, requestInfo *apirequest.RequestInfo) string {
 }
 
 func setRequestHeader(req *http.Request, userInfo user.Info, impersonateToken string) {
-	req.Header.Set(authenticationv1.ImpersonateUserHeader, userInfo.GetName())
+	//  todo hardcode for test
+	klog.Infof("setRequestHeader %s", userInfo.GetName())
+	//req.Header.Set(authenticationv1.ImpersonateUserHeader, userInfo.GetName())
+	req.Header.Set(authenticationv1.ImpersonateUserHeader, "system:admin")
 	for _, group := range userInfo.GetGroups() {
 		if !proxy.SkipGroup(group) {
 			req.Header.Add(authenticationv1.ImpersonateGroupHeader, group)

@@ -87,6 +87,7 @@ func (c completedConfig) New(restConfig *restclient.Config, secretLister listcor
 		klog.Errorf("Unable to create REST storage for a resource due to %v, will die", err)
 		return nil, err
 	}
+	klog.Infof("this is aggregated apiserver")
 	v1alpha1cluster := map[string]rest.Storage{}
 	v1alpha1cluster["clusters"] = clusterStorage.Cluster
 	v1alpha1cluster["clusters/status"] = clusterStorage.Status

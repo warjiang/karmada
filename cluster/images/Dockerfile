@@ -15,7 +15,7 @@
 FROM alpine:3.20.1
 
 ARG BINARY
-
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 RUN apk add --no-cache ca-certificates
 #tzdata is used to parse the time zone information when using CronFederatedHPA
 RUN apk add --no-cache tzdata

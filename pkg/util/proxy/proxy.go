@@ -22,6 +22,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"k8s.io/klog/v2"
 	"net/http"
 	"net/url"
 	"path"
@@ -81,19 +82,26 @@ func newProxyHandler(location *url.URL, proxyTransport http.RoundTripper, cluste
 	responder registryrest.Responder, tlsConfig *tls.Config) (http.Handler, error) {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		requester, exist := request.UserFrom(req.Context())
+
 		if !exist {
 			responsewriters.InternalError(rw, req, errors.New("no user found for request"))
 			return
 		}
-
-		req.Header.Set(authenticationv1.ImpersonateUserHeader, requester.GetName())
+		// TODO: hardcode for test
+		//req.Header.Set(authenticationv1.ImpersonateUserHeader, requester.GetName())
+		req.Header.Set(authenticationv1.ImpersonateUserHeader, "system:admin")
+		//req.Header.Set(authenticationv1.ImpersonateGroupHeader, "system:masters")
+		req.Header[authenticationv1.ImpersonateGroupHeader] = []string{"system:masters"}
 		for _, group := range requester.GetGroups() {
 			if !SkipGroup(group) {
-				req.Header.Add(authenticationv1.ImpersonateGroupHeader, group)
+				//req.Header.Add(authenticationv1.ImpersonateGroupHeader, group)
 			}
 		}
 		req.Header.Set("Authorization", fmt.Sprintf("bearer %s", impersonateToken))
-
+		klog.Infof("[Proxy] user is %s", "system:admin")
+		klog.Infof("[Proxy] impersonateToken is %s", impersonateToken)
+		klog.Infof("[Proxy] header is %+v", ParseProxyHeaders(cluster.Spec.ProxyHeader))
+		klog.Infof("[Proxy] req.header is %+v", req.Header)
 		var proxyURL *url.URL
 		if proxyURLStr := cluster.Spec.ProxyURL; proxyURLStr != "" {
 			proxyURL, _ = url.Parse(proxyURLStr)
