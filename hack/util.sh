@@ -795,3 +795,44 @@ EOF
   echo "Timeout for nodes' taint to disappear"
   return 1
 }
+
+# TODO here we should take all kind of os and arch into consideration, including util::get_os_name & util::get_os_arch
+
+# This function will return os name, only linux and macos are allowed
+# Parameters:
+# Return:
+#   os name
+function util::get_os_name() {
+  local aliased_os
+  uname_out=$(uname -a)
+  case "${uname_out}" in
+    Linux*)
+      aliased_os="linux"
+      ;;
+    Darwin*)
+      aliased_os="darwin"
+      ;;
+    *)
+      aliased_os="unknown:${uname_out}"
+      ;;
+  esac
+  echo "${aliased_os}"
+}
+
+# This function will return arch name
+# Parameters:
+# Return:
+#   os arch
+function util::get_os_arch() {
+  local aliased_arch
+  uname_out=$(uname -m)
+  case "${uname_out}" in
+    x86_64)
+      aliased_arch="amd64"
+      ;;
+    *)
+      aliased_arch="${uname_out}"
+      ;;
+  esac
+  echo "${aliased_arch}"
+}
