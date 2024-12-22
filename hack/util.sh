@@ -836,3 +836,9 @@ function util::get_os_arch() {
   esac
   echo "${aliased_arch}"
 }
+
+function util::fetch_latest_tag() {
+  user_or_org_name=$1
+  repo_name=$2
+  curl -s "https://api.github.com/repos/${user_or_org_name}/${repo_name}/releases/latest" |grep '"tag_name"' | sed 's/.*"tag_name": "\([^"]*\)".*/\1/'
+}
