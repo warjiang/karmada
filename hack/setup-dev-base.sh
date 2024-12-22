@@ -53,8 +53,12 @@ if [[ -n ${CHINA_MAINLAND:-} ]]; then
 fi
 
 # make sure go exists and the go version is a viable version.
-util::cmd_must_exist "go"
-util::verify_go_version
+if [[ "${BUILD_FROM_SOURCE}" == "true" ]]; then
+  echo "Skip check go"
+else
+  util::cmd_must_exist "go"
+  util::verify_go_version
+fi
 
 # make sure docker exists
 util::cmd_must_exist "docker"
@@ -70,8 +74,10 @@ else
 fi
 
 # get arch name and os name in bootstrap
-BS_ARCH=$(go env GOARCH)
-BS_OS=$(go env GOOS)
+#BS_ARCH=$(go env GOARCH)
+#BS_OS=$(go env GOOS)
+BS_ARCH=$(util::get_os_arch)
+BS_OS=$(util::get_os_name)
 # check arch and os name before installing
 util::install_environment_check "${BS_ARCH}" "${BS_OS}"
 echo -n "Preparing: 'kubectl' existence check - "
@@ -123,8 +129,16 @@ if [[ "${BUILD_FROM_SOURCE}" == "true" ]]; then
   #clean up dangling images
   docker image prune --force --filter "label=image.karmada.io=${KARMADA_IMAGE_LABEL_VALUE}"
 fi
-GO111MODULE=on go install "github.com/karmada-io/karmada/cmd/karmadactl"
 
+if [[ "${BUILD_FROM_SOURCE}" == "true" ]]; then
+  echo "Ignore build karmadactl from source"
+  if [ ! $(util::cmd_exist karmadactl) ]; then
+    echo "Please install karmadactl manually"
+    exit 1
+  fi
+else
+  GO111MODULE=on go install "github.com/karmada-io/karmada/cmd/karmadactl"
+fi
 #step3. wait until clusters ready
 echo "Waiting for the clusters to be ready..."
 util::check_clusters_ready "${MAIN_KUBECONFIG}" "${HOST_CLUSTER_NAME}"
