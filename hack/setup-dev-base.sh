@@ -114,8 +114,8 @@ util::create_cluster "${MEMBER_CLUSTER_2_NAME}" "${MEMBER_CLUSTER_2_TMP_CONFIG}"
 util::create_cluster "${PULL_MODE_CLUSTER_NAME}" "${PULL_MODE_CLUSTER_TMP_CONFIG}" "${CLUSTER_VERSION}" "${KIND_LOG_FILE}" "${TEMP_PATH}"/member3.yaml
 
 #step2. make images and get karmadactl
-export VERSION="latest"
-export REGISTRY="docker.io/karmada"
+export VERSION=${CUSTOM_VERSION:-"latest"}
+export REGISTRY=${CUSTOM_REGISTRY:-"docker.io"}
 if [[ "${BUILD_FROM_SOURCE}" == "true" ]]; then
   export KARMADA_IMAGE_LABEL_VALUE="May_be_pruned_in_local_up_environment"
   export DOCKER_BUILD_ARGS="${DOCKER_BUILD_ARGS:-} --label=image.karmada.io=${KARMADA_IMAGE_LABEL_VALUE}"
@@ -148,6 +148,16 @@ if [[ "${BUILD_FROM_SOURCE}" == "true" ]]; then
   done
   # pull mode member cluster
   kind load docker-image "${REGISTRY}/karmada-agent:${VERSION}" --name="${PULL_MODE_CLUSTER_NAME}"
+else
+  for image in "karmada/karmada-controller-manager" "karmada/karmada-scheduler" "karmada/karmada-descheduler" "karmada/karmada-webhook" "karmada/karmada-scheduler-estimator" "karmada/karmada-aggregated-apiserver" "karmada/karmada-search" "karmada/karmada-metrics-adapter"; do
+    docker pull "${REGISTRY}/${image}:${VERSION}"
+    docker tag "${REGISTRY}/${image}:${VERSION}" ${image}:latest
+    kind load docker-image ${image}:latest --name="${HOST_CLUSTER_NAME}"
+  done
+
+  docker pull "${REGISTRY}/karmada/karmada-agent:${VERSION}"
+  docker tag "${REGISTRY}/karmada/karmada-agent:${VERSION}" karmada/karmada-agent:latest
+  kind load docker-image "karmada/karmada-agent:latest" --name="${PULL_MODE_CLUSTER_NAME}"
 fi
 
 #step5. connecting networks between karmada-host, member1 and member2 clusters

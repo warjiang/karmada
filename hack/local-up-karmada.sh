@@ -77,6 +77,12 @@ ${KARMADACTL_BIN} join --karmada-context="${KARMADA_APISERVER_CLUSTER_NAME}" ${M
 "${REPO_ROOT}"/hack/deploy-agent-and-estimator.sh "${MAIN_KUBECONFIG}" "${HOST_CLUSTER_NAME}" "${MAIN_KUBECONFIG}" "${KARMADA_APISERVER_CLUSTER_NAME}" "${MEMBER_CLUSTER_KUBECONFIG}" "${PULL_MODE_CLUSTER_NAME}"
 
 # step5. deploy metrics-server in member clusters
+export REGISTRY=${CUSTOM_REGISTRY:-"docker.io"}
+for cluster in "${MEMBER_CLUSTER_1_NAME}" "${MEMBER_CLUSTER_2_NAME}" "${PULL_MODE_CLUSTER_NAME}"; do
+  docker pull "${REGISTRY}/metrics-server/metrics-server:v0.6.3"
+  docker tag "${REGISTRY}/metrics-server/metrics-server:v0.6.3" registry.k8s.io/metrics-server/metrics-server:v0.6.3
+  kind load docker-image registry.k8s.io/metrics-server/metrics-server:v0.6.3 --name="${cluster}"
+done
 "${REPO_ROOT}"/hack/deploy-k8s-metrics-server.sh "${MEMBER_CLUSTER_KUBECONFIG}" "${MEMBER_CLUSTER_1_NAME}"
 "${REPO_ROOT}"/hack/deploy-k8s-metrics-server.sh "${MEMBER_CLUSTER_KUBECONFIG}" "${MEMBER_CLUSTER_2_NAME}"
 "${REPO_ROOT}"/hack/deploy-k8s-metrics-server.sh "${MEMBER_CLUSTER_KUBECONFIG}" "${PULL_MODE_CLUSTER_NAME}"
