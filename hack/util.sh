@@ -669,14 +669,18 @@ function util::get_load_balancer_ip() {
 #  - $2: the kubeconfig path of the cluster wanted to be connected
 #  - $3: the context in kubeconfig of the cluster wanted to be connected
 function util::add_routes() {
+  # fix: here we can't fetch the podCIDR, use util::wait_for_condition to ensure the existence of the podCIDR
+  util::wait_for_condition '1' "kubectl --kubeconfig ${2} --context ${3} get nodes -o jsonpath='{range .items[*]}{.spec.podCIDR}{\"\n\"}{end}'"
   unset IFS
   routes=$(kubectl --kubeconfig ${2} --context ${3} get nodes -o jsonpath='{range .items[*]}ip route add {.spec.podCIDR} via {.status.addresses[?(.type=="InternalIP")].address}{"\n"}{end}')
   echo "Connecting cluster ${1} to ${2}"
 
   IFS=$'\n'
+  echo $routes
   for n in $(kind get nodes --name "${1}"); do
     for r in $routes; do
       echo "exec cmd in docker $n $r"
+      echo "$r"
       eval "docker exec $n $r"
     done
   done
