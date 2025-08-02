@@ -5,3 +5,8 @@ networking:
   serviceSubnet: "10.11.0.0/16"
 nodes:
   - role: control-plane
+    # we can use envsubst to replace the registry with a different one
+    # ${var:-default} means if $var is empty, the envsubst will try to find the $default var
+    # not use the default value directly
+    # we assume that the REGISTRY will not end with `/`, so we should write the custom registry name with `/`
+    # image: ${REGISTRY/}kindest/node:v1.27.11
